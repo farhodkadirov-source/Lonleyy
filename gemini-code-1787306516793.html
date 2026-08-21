@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lonely.net</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center; 
+            overflow: hidden; 
+            background-color: #06080c; 
+            color: #e1e1e6; 
+            padding-right: 10%; 
+        }
+
+        /* Атмосферный фон */
+        .code-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(to bottom, #030508, #0a0e17 60%, #121926); }
+        .moon { position: absolute; top: 15%; right: 20%; width: 70px; height: 70px; background: radial-gradient(circle, rgba(200, 215, 235, 0.4) 0%, transparent 70%); border-radius: 50%; }
+        .mountain-back { position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh; background: #0f141f; clip-path: polygon(0 100%, 0 40%, 25% 15%, 55% 50%, 80% 20%, 100% 45%, 100% 100%); }
+        .mountain-front { position: absolute; bottom: 0; left: 0; width: 100%; height: 20vh; background: #080b11; clip-path: polygon(0 100%, 0 60%, 15% 30%, 40% 70%, 70% 25%, 100% 50%, 100% 100%); }
+        .lonely-figure { position: absolute; bottom: 17vh; left: 35%; width: 16px; height: 55px; }
+        .lonely-figure::before { content: ''; position: absolute; top: 0; left: 3px; width: 10px; height: 10px; background: #020305; border-radius: 50%; }
+        .lonely-figure::after { content: ''; position: absolute; top: 10px; left: 0; width: 16px; height: 45px; background: #020305; border-radius: 4px 4px 0 0; }
+
+        /* Карточка */
+        .container { width: 100%; max-width: 580px; padding: 20px; text-align: center; z-index: 1; }
+        .card { background: rgba(13, 17, 23, 0.94); backdrop-filter: blur(14px); border: 1px solid rgba(48, 54, 61, 0.7); border-radius: 18px; padding: 25px 20px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.85); position: relative; overflow: hidden; }
+        .logo { font-size: 26px; font-weight: 700; color: #f0f0f5; margin-bottom: 2px; }
+        .tagline { font-size: 11px; color: #8b949e; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px; }
+        
+        /* Сетка для меню */
+        .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 10px 8px; background: #1f2430; color: #e1e1e6; border-radius: 8px; border: 1px solid #333c4d; cursor: pointer; transition: 0.2s; font-size: 12px; font-weight: 500; text-align: center; }
+        .btn:hover { background: #283040; border-color: #58a6ff; color: #fff; }
+        
+        .btn-full { grid-column: span 2; }
+        
+        .form-box { display: none; text-align: left; }
+        .form-box.active { display: block; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+        .form-group input { width: 100%; padding: 8px 12px; background: #0d0f12; border: 1px solid #333c4d; border-radius: 6px; color: #fff; font-size: 13px; }
+        .form-group input:focus { outline: none; border-color: #58a6ff; }
+
+        /* Экран объятий */
+        #hug-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(8, 11, 17, 0.96);
+            backdrop-filter: blur(18px);
+            border-radius: 18px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 10;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .hug-avatar-box {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            animation: pulseHug 2s infinite ease-in-out;
+            font-size: 35px;
+        }
+
+        #hug-message {
+            font-size: 15px;
+            color: #93c5fd;
+            font-weight: 600;
+            line-height: 1.5;
+            min-height: 50px;
+            transition: opacity 0.5s ease;
+            opacity: 0;
+            padding: 0 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulseHug {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        /* Галерея мыслей */
+        .words-gallery-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .warmth-card-preview {
+            width: 100%;
+            min-height: 170px;
+            border-radius: 12px;
+            border: 2px solid #ec4899;
+            padding: 18px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.25);
+            background: #0d0f12;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .warmth-text {
+            font-size: 13px;
+            color: #fce7f3;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .photo-counter {
+            font-size: 11px;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .gallery-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .gallery-btn {
+            flex: 1;
+            padding: 8px;
+            background: #1f2430;
+            color: #e1e1e6;
+            border: 1px solid #333c4d;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+        .gallery-btn:hover { background: #283040; border-color: #ec4899; color: #fff; }
+
+        /* Книжный формат со скроллом */
+        .words-box {
+            text-align: left;
+            max-height: 310px;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+        
+        .words-box::-webkit-scrollbar { width: 4px; }
+        .words-box::-webkit-scrollbar-thumb { background: #333c4d; border-radius: 4px; }
+
+        .word-item {
+            background: #0d0f12;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: border-color 0.2s;
+        }
+        .word-item:hover { border-color: #3b82f6; }
+        .word-item span { color: #a855f7; font-weight: 700; margin-right: 5px; }
+
+        /* Стили для музыкальных треков */
+        .music-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0d0f12;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: border-color 0.2s;
+        }
+        .music-item:hover { border-color: #06b6d4; }
+        .music-info { font-size: 12px; color: #e1e1e6; }
+        .music-info b { display: block; color: #22d3ee; margin-bottom: 2px; }
+        .play-btn {
+            background: #0891b2;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: 0.2s;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+        .play-btn:hover { background: #06b6d4; }
+        .play-btn.playing { background: #ef4444; }
+
+        .back-link { display: inline-block; margin-top: 10px; font-size: 12px; color: #58a6ff; cursor: pointer; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+
+        <footer></footer>
+    </style>
+</head>
+<body>
+
+    <div class="code-background">
+        <div class="moon"></div>
+        <div class="mountain-back"></div>
+        <div class="mountain-front"></div>
+        <div class="lonely-figure"></div>
+    </div>
+
+    <div class="container">
+        <div class="card" id="main-card">
+            <div class="logo">Lonely.net</div>
+            <p class="tagline">Independent path</p>
+            
+            <!-- Основное меню -->
+            <div id="main-menu" class="menu">
+                <button class="btn" onclick="showForm('register-form')">1. Регистрация</button>
+                <button class="btn" onclick="showForm('login-form')">2. Вход</button>
+                <button class="btn btn-full" onclick="showForm('words-form')" style="border-color: #3b82f6; background: #1e293b;">3. Слова, которые ты ждал</button>
+                <button class="btn btn-full" onclick="showForm('warmth-form')" style="border-color: #ec4899; background: #831843; color: #fbcfe8;">4. Галерея тепла (Мысли)</button>
+                <button class="btn btn-full" onclick="showForm('admin-words-form')" style="border-color: #a855f7; background: #581c87; color: #f3e8ff;">5. 🥺 Слова от админа (До слез)</button>
+                <button class="btn btn-full" onclick="showForm('reviews-form')" style="border-color: #38bdf8; background: #0369a1; color: #e0f2fe;">6. 💬 Отзывы тех, кто понял</button>
+                <button class="btn btn-full" onclick="showForm('coping-form')" style="border-color: #34d399; background: #064e3b; color: #a7f3d0;">7. 🌱 Как справиться с одиночеством</button>
+                <button class="btn btn-full" onclick="showForm('paths-form')" style="border-color: #f59e0b; background: #78350f; color: #fde68a;">8. ⚖️ Две дороги: Свет и Тьма</button>
+                <button class="btn btn-full" onclick="showForm('music-form')" style="border-color: #06b6d4; background: #164e63; color: #a5f3fc;">9. 🎵 Музыка для одиноких</button>
+            </div>
+
+            <!-- Регистрация -->
+            <div id="register-form" class="form-box">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" placeholder="Твое имя...">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" placeholder="••••••••">
+                </div>
+                <button class="btn btn-full" style="background:#238636; border-color:#2ea043; color:#fff;" onclick="triggerHug()">Зарегистрироваться</button>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Вход -->
+            <div id="login-form" class="form-box">
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" placeholder="Твое имя...">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" placeholder="••••••••">
+                </div>
+                <button class="btn btn-full" style="background:#238636; border-color:#2ea043; color:#fff;" onclick="triggerHug()">Войти</button>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Экран объятий -->
+            <div id="hug-overlay">
+                <div class="hug-avatar-box">💖</div>
+                <div id="hug-message">Секунду... самые искренние слова уже спешат к тебе 🫂</div>
+                <span class="back-link" style="margin-top: 15px;" onclick="resetApp()">← Вернуться в меню</span>
+            </div>
+
+            <!-- Раздел 3 -->
+            <div id="words-form" class="form-box">
+                <div class="words-box">
+                    <div class="word-item"><span>1.</span> Милый, я вечно с тобой, чтобы ни случилось.</div>
+                    <div class="word-item"><span>2.</span> Ты самый лучший, просто отдыхай, я рядом.</div>
+                    <div class="word-item"><span>3.</span> Я так горжусь тем, как ты борешься со всем один.</div>
+                    <div class="word-item"><span>4.</span> Хватит всё держать в себе, можешь расслабиться и выплакаться мне.</div>
+                    <div class="word-item"><span>5.</span> Ты не один, я держу тебя за руку сквозь любые преграды.</div>
+                    <div class="word-item"><span>6.</span> Я вижу, как сильно ты стараешься ради всего, и ценю это.</div>
+                    <div class="word-item"><span>7.</span> Отдохни, родной. Этот мир подождет, пока ты придешь в себя.</div>
+                    <div class="word-item"><span>8.</span> Мне больно видеть, как ты устал. Позволь мне хотя бы иногда заботиться о тебе.</div>
+                    <div class="word-item"><span>9.</span> Ты имеешь право на слабость. Тебе больше не нужно никому ничего доказывать.</div>
+                    <div class="word-item"><span>10.</span> Я буду твоим тихим пристанищем, когда этот мир станет слишком жестоким.</div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 4 -->
+            <div id="warmth-form" class="form-box">
+                <div class="words-gallery-container">
+                    <div class="photo-counter" id="warmth-counter">Мысль 1 из 10</div>
+                    <div class="warmth-card-preview">
+                        <div class="warmth-text" id="warmth-text">Текст...</div>
+                    </div>
+                    
+                    <div class="gallery-controls">
+                        <button class="gallery-btn" onclick="prevWarmth()">← Назад</button>
+                        <button class="gallery-btn" onclick="nextWarmth()">Вперед →</button>
+                    </div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 5: Слова от админа -->
+            <div id="admin-words-form" class="form-box">
+                <div class="words-box" style="border: 1px solid #a855f7; border-radius: 10px; padding: 8px;">
+                    <div class="word-item" style="border-color: #581c87;"><span>⚠️ От админа:</span> Знаю, ты зашел сюда, потому что внутри накопилось слишком много боли, которую нельзя никому показать.</div>
+                    <div class="word-item" style="border-color: #581c87;"><span>1.</span> Плачь, если хочется. Выплесни всё наружу. Никто не увидит твоих слёз, и здесь за них тебе не будет стыдно.</div>
+                    <div class="word-item" style="border-color: #581c87;"><span>2.</span> Ты тащишь на себе груз, который сломал бы любого другого. Но ты держишься. И это вызывает у меня безумное уважение.</div>
+                    <div class="word-item" style="border-color: #581c87;"><span>3.</span> Перестань винить себя за ошибки. Ты живой человек, ты имеешь право уставать, ошибаться и падать.</div>
+                    <div class="word-item" style="border-color: #581c87;"><span>4.</span> Помни: даже когда вокруг никого нет, этот сайт и эти слова созданы для тебя. Ты важен. Твоя жизнь имеет значение.</div>
+                    <div class="word-item" style="border-color: #581c87;"><span>5.</span> Выдохни. Закрой глаза на пару минут. Больше не нужно бежать и доказывать миру свою силу. Ты дома.</div>
+                    <div class="word-item" style="border-color: #581c87; background: #181124;"><span>✨ И главное:</span> Все эти аниме-девушки — твое воображение. Забудь о них, и тебе станет лучше. В мире полно реальных девушек, которые ищут себе красивых парней — иди выйди на улицу и ищи свою красотку! 🥲</div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 6: Отзывы -->
+            <div id="reviews-form" class="form-box">
+                <div class="words-box" style="border: 1px solid #38bdf8; border-radius: 10px; padding: 8px;">
+                    <div class="word-item" style="border-color: #0369a1;"><span>💬 Отзыв #1:</span> «Зашел сюда просто ради интереса, а в итоге сижу в темноте и реву в подушку... Эти слова попали прямо в самую душу.»</div>
+                    <div class="word-item" style="border-color: #0369a1;"><span>💬 Отзыв #2:</span> «Открыл раздел с мыслями и понял, что каждая строчка — про меня. Спасибо админу за правду в конце. 🥲»</div>
+                    <div class="word-item" style="border-color: #0369a1;"><span>💬 Отзыв #3:</span> «Когда на часах 3 часа ночи, и тебе некому сказать даже простейшее "привет", этот сайт становится единственным местом.»</div>
+                    <div class="word-item" style="border-color: #0369a1;"><span>💬 Отзыв #4:</span> «Слишком больно, слишком честно. Сижу и смотрю в пустой экран.»</div>
+                    <div class="word-item" style="border-color: #0369a1;"><span>💬 Отзыв #5:</span> «Последняя фраза про воображение и улицу просто добила. Но, наверное, пора что-то менять...»</div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 7: Как справиться с одиночеством -->
+            <div id="coping-form" class="form-box">
+                <div class="words-box" style="border: 1px solid #34d399; border-radius: 10px; padding: 8px;">
+                    <div class="word-item" style="border-color: #064e3b; background: #062e22;"><span>🌱 Шаг 1. Признай свои чувства.</span> Не бойся признаться себе, что тебе одиноко. Плакать, чувствовать тоску — это нормально.</div>
+                    <div class="word-item" style="border-color: #064e3b;"><span>🌱 Шаг 2. Разделяй реальность и иллюзии.</span> Сны и воображение дают временное утешение, но жизнь происходит наяву.</div>
+                    <div class="word-item" style="border-color: #064e3b;"><span>🌱 Шаг 3. Займи себя тем, что приносит радость.</span> Творчество, рисование или создание игр помогают перенаправить мысли в созидательную энергию.</div>
+                    <div class="word-item" style="border-color: #064e3b;"><span>🌱 Шаг 4. Сделай шаг навстречу людям.</span> Настоящее общение начинается с малого: улыбки прохожему или разговора с другом.</div>
+                    <div class="word-item" style="border-color: #064e3b;"><span>🌱 Шаг 5. Стань опорой для самого себя.</span> Твое одиночество — это не приговор, а время, чтобы стать сильнее.</div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 8: Две дороги (Свет и Тьма) -->
+            <div id="paths-form" class="form-box">
+                <div class="words-box" style="border: 1px solid #f59e0b; border-radius: 10px; padding: 8px;">
+                    <div class="word-item" style="border-color: #d97706; background: #261704;"><span>☀️ СТОРОНА 1: Те, кто выбрал свет и нашел цель</span></div>
+                    <div class="word-item" style="border-color: #78350f;"><span>• История Марка:</span> «Я годами сидел в компе, боялся заговорить с кем-то в реале. Потом заставил себя выйти в парк на пробежку. Там случайно познакомился с девушкой, которая тоже любила рисовать. Теперь мы вместе строим планы на жизнь.»</div>
+                    <div class="word-item" style="border-color: #78350f;"><span>• История Алексея:</span> «Понял, что виртуальный мир забирает мое время. Перестал жалеть себя, занялся учебой, начал ходить на секцию. Спустя полгода встретил её — мою будущую девушку. Оказалось, реальная жизнь намного ярче экранов.»</div>
+                    
+                    <div class="word-item" style="border-color: #991b1b; background: #260606; margin-top: 6px;"><span>🌑 СТОРОНА 2: Те, кто остался в глубоком одиночестве</span></div>
+                    <div class="word-item" style="border-color: #7f1d1d;"><span>• История «Игрока #404»:</span> «Я так привык к комфорту цифровых миров и выдуманным персонажам, что реальные люди стали казаться мне чужими. Прошли годы. Я по-прежнему один в пустой комнате перед монитором, и тишина вокруг стала оглушающей.»</div>
+                    <div class="word-item" style="border-color: #7f1d1d;"><span>• История «Тени»:</span> «Мне казалось, что время терпит. Я откладывал выход в реальный мир на потом, прятался от проблем в иллюзиях. В итоге друзья обзавелись семьями, а я остался заперт в собственном прошлом, потеряв способность любить по-настоящему.»</div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+
+            <!-- Раздел 9: Музыка для одиноких -->
+            <div id="music-form" class="form-box">
+                <div class="words-box" style="border: 1px solid #06b6d4; border-radius: 10px; padding: 8px;">
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🌙 Ночной дождь за окном</b>
+                            Медленный меланхоличный эмбиент.
+                        </div>
+                        <button class="play-btn" id="btn-track1" onclick="toggleMusic(1, 'rain')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🌌 Пустота комнаты</b>
+                            Глубокие космические ноты.
+                        </div>
+                        <button class="play-btn" id="btn-track2" onclick="toggleMusic(2, 'space')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>💫 Осколки воспоминаний</b>
+                            Грустная пианино-мелодия.
+                        </div>
+                        <button class="play-btn" id="btn-track3" onclick="toggleMusic(3, 'piano')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🕯️ Последний свет свечи</b>
+                            Теплый успокаивающий фон.
+                        </div>
+                        <button class="play-btn" id="btn-track4" onclick="toggleMusic(4, 'warm')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🌧️ Одинокий прохожий</b>
+                            Медленные капли и грустный минор.
+                        </div>
+                        <button class="play-btn" id="btn-track5" onclick="toggleMusic(5, 'pacing')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🕰️ Время за полночь</b>
+                            Тягучие электронные аккорды.
+                        </div>
+                        <button class="play-btn" id="btn-track6" onclick="toggleMusic(6, 'midnight')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>🍃 Осенний ветер</b>
+                            Легкий холодный и умиротворяющий звук.
+                        </div>
+                        <button class="play-btn" id="btn-track7" onclick="toggleMusic(7, 'wind')">Слушать</button>
+                    </div>
+
+                    <div class="music-item">
+                        <div class="music-info">
+                            <b>✨ Эхо прошлых лет</b>
+                            Ностальгическая мягкая мелодия.
+                        </div>
+                        <button class="play-btn" id="btn-track8" onclick="toggleMusic(8, 'echo')">Слушать</button>
+                    </div>
+                </div>
+                <span class="back-link" onclick="showMenu()">← Назад в меню</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hugTimer = null;
+        let messageInterval = null;
+
+        // Музыкальный плеер через Web Audio API
+        let audioCtx = null;
+        let activeInterval = null;
+        let currentPlayingTrack = null;
+
+        function stopMusic() {
+            if (activeInterval) {
+                clearInterval(activeInterval);
+                activeInterval = null;
+            }
+            if (audioCtx) {
+                audioCtx.close();
+                audioCtx = null;
+            }
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.textContent = 'Слушать';
+                btn.classList.remove('playing');
+            });
+            currentPlayingTrack = null;
+        }
+
+        function toggleMusic(trackId, type) {
+            const btn = document.getElementById('btn-track' + trackId);
+            
+            if (currentPlayingTrack === trackId) {
+                stopMusic();
+                return;
+            }
+
+            stopMusic();
+            currentPlayingTrack = trackId;
+            btn.textContent = 'Стоп ⏹';
+            btn.classList.add('playing');
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            let notes = [220, 246.94, 261.63, 293.66, 329.63, 392.00];
+            if (type === 'space') notes = [110, 130.81, 146.83, 164.81, 196.00];
+            if (type === 'piano') notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 523.25];
+            if (type === 'warm') notes = [174.61, 196.00, 220.00, 261.63, 293.66];
+            if (type === 'pacing') notes = [196.00, 220.00, 246.94, 293.66, 349.23];
+            if (type === 'midnight') notes = [130.81, 146.83, 174.61, 196.00, 220.00];
+            if (type === 'wind') notes = [246.94, 293.66, 329.63, 392.00, 440.00];
+            if (type === 'echo') notes = [220.00, 261.63, 329.63, 392.00, 523.25];
+
+            function playNote() {
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                const freq = notes[Math.floor(Math.random() * notes.length)];
+                osc.type = (type === 'space' || type === 'midnight') ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.07, audioCtx.currentTime + 1.2);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 4.5);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 5);
+            }
+
+            playNote();
+            activeInterval = setInterval(playNote, 2200);
+        }
+
+        const nicePhrases = [
+            "Ты так долго терпел эту боль в одиночку... Позволь мне забрать её всю себе.",
+            "Если мир отвернулся от тебя — знай, я буду идти за тобой до самого конца, даже сквозь тьму.",
+            "Ты плачешь? Иди ко мне... Твои слёзы не делают тебя слабым, они показывают, как сильно ты устал быть сильным.",
+            "Никому и никогда не позволяй говорить, что ты один. Я чувствую каждый удар твоего сердца.",
+            "Закрой глаза. Ты дома. Больше тебе не нужно никому ничего доказывать, отдыхай..."
+        ];
+
+        const warmthData = [
+            "«Знаешь... я ведь вижу, как по ночам ты смотришь в потолок и думаешь, что никому не нужен. Ты — это всё, ради чего стоит улыбаться.»",
+            "«Ты так отчаянно пытаешься спасти всех вокруг, но кто спасет тебя от твоей собственной усталости? Давай я побуду твоим щитом от этого мира.»",
+            "«Мне так больно осознавать, через сколько штормов тебе приходится проходить в одиночку. Если упадешь — я упаду вместе с тобой, но не брошу.»",
+            "«Заплачь, если тебе тяжело. Хватит носить эту маску непобедимости. Здесь ты можешь наконец-то перестать держаться из последних сил.»",
+            "«Даже если от тебя отвернутся абсолютно все, даже если погаснут звезды — я останусь сидеть рядом с тобой на холодном полу и буду держать за руку.»",
+            "«Ты — самое дорогое чудо в моей жизни. Прости, что я не могу обнять тебя прямо сейчас физически, но мое сердце бьется только ради тебя.»",
+            "«Каждый раз, когда тебе хочется всё бросить и исчезнуть, вспомни, что где-то есть тот, кто безумно ценит твое тепло и твою душу.»",
+            "«Ты имеешь право плакать. Твоя душа изранена, но она прекрасна. Позволь этому миру хотя бы на секунду перестать давить на тебя.»",
+            "«Я отдам всё на свете, лишь бы убрать эту грусть из твоих глаз. Ты заслуживаешь самого чистого и бесконечного счастья.»",
+            "«Засыплай спокойно... Я буду охранять твой сон от всех кошмаров и тревог. Ты в безопасности, мой самый родной человек.»"
+        ];
+
+        let currentWarmthIndex = 0;
+
+        function updateWarmthCard() {
+            document.getElementById('warmth-text').textContent = warmthData[currentWarmthIndex];
+            document.getElementById('warmth-counter').textContent = `Мысль ${currentWarmthIndex + 1} из ${warmthData.length}`;
+        }
+
+        function nextWarmth() {
+            currentWarmthIndex = (currentWarmthIndex + 1) % warmthData.length;
+            updateWarmthCard();
+        }
+
+        function prevWarmth() {
+            currentWarmthIndex = (currentWarmthIndex - 1 + warmthData.length) % warmthData.length;
+            updateWarmthCard();
+        }
+
+        function showForm(formId) {
+            document.getElementById('main-menu').style.display = 'none';
+            document.querySelectorAll('.form-box').forEach(f => f.classList.remove('active'));
+            document.getElementById(formId).classList.add('active');
+            
+            if (formId === 'warmth-form') {
+                updateWarmthCard();
+            }
+        }
+
+        function showMenu() {
+            stopMusic();
+            document.querySelectorAll('.form-box').forEach(f => f.classList.remove('active'));
+            document.getElementById('main-menu').style.display = 'grid';
+            document.getElementById('hug-overlay').style.display = 'none';
+            clearInterval(hugTimer);
+            clearInterval(messageInterval);
+        }
+
+        function triggerHug() {
+            document.querySelectorAll('.form-box').forEach(f => f.classList.remove('active'));
+            
+            const overlay = document.getElementById('hug-overlay');
+            const msgBox = document.getElementById('hug-message');
+            overlay.style.display = 'flex';
+            msgBox.innerHTML = "Секунду... самые искренние слова уже спешат к тебе 🫂";
+            msgBox.style.opacity = "1";
+
+            hugTimer = setTimeout(() => {
+                let index = 0;
+                
+                function updatePhrase() {
+                    msgBox.style.opacity = "0";
+                    setTimeout(() => {
+                        msgBox.innerHTML = nicePhrases[index];
+                        msgBox.style.opacity = "1";
+                        index = (index + 1) % nicePhrases.length;
+                    }, 400);
+                }
+
+                updatePhrase();
+                messageInterval = setInterval(updatePhrase, 4000);
+
+            }, 4500);
+        }
+
+        function resetApp() {
+            showMenu();
+        }
+    </script>
+</body>
+</html>
